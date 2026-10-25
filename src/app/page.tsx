@@ -172,20 +172,28 @@ export default function Home() {
                                         </div>
                                     )}
 
-                                    {metrics && (
-                                        <div className="bg-white/50 border border-[var(--color-navy)]/10 p-4 flex flex-col gap-2">
-                                            <div className="flex justify-between items-center border-b border-[var(--color-navy)]/5 pb-2">
-                                                <span className="text-[9px] font-black uppercase text-slate-500">{t.ui_confidence}</span>
-                                                <span className="text-sm font-black text-[var(--color-navy)]">{metrics.model_confidence}%</span>
-                                            </div>
-                                            <div className="w-full bg-slate-200 h-1 mt-1">
-                                                <div
-                                                    className="bg-[var(--color-accent)] h-full transition-all duration-1000"
-                                                    style={{ width: `${metrics.model_confidence}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                                   {metrics && (
+    <div className="bg-white/50 border border-[var(--color-navy)]/10 p-4 flex flex-col gap-2">
+        <span className="text-[9px] font-black uppercase text-slate-500">Zone</span>
+        <span className="text-sm font-black text-[var(--color-navy)]">
+            {metrics.zone?.name ?? "No zone data"}
+        </span>
+        {metrics.zone && (
+            <>
+                <div className="flex justify-between text-xs font-bold">
+                    <span>Score: {metrics.zone.score}/100</span>
+                    <span>{metrics.zone.level}</span>
+                </div>
+                <div className="text-[10px] text-slate-500">
+                    Drain load: {metrics.zone.drain_load_pct}% · Rain used: {metrics.zone.rainfall_mm_used} mm
+                </div>
+            </>
+        )}
+        <div className="text-[9px] text-slate-400 uppercase">
+            Prototype estimate, not measured data
+        </div>
+    </div>
+)}
                                 </div>
 
                                 <div className="lg:col-span-6 flex flex-col gap-4">

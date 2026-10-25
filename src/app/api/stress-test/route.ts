@@ -70,16 +70,12 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
             drainageCapacity: data?.urban_profile?.drainage_efficiency || 0.5
         });
 
-        return NextResponse.json({
+                   return NextResponse.json({
             success: true,
-            data: {
-                ...data,
-                ...riskMetrics
-            },
+            data: { ...riskMetrics, ...data, zone: data?.zone ?? null },
             timestamp: new Date().toISOString(),
             source: "urban-intelligence-core"
         });
-
     } catch (error: any) {
         logger.error("API error in stress-test route", error.message);
         return NextResponse.json(

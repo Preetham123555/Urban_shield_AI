@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UrbanShield Zone Check</title>
+<style>
+:root {
+  --bg: #EEF2F5; --surface: #FFFFFF; --surface-2: #F5F8FA; --ink: #12202C; --muted: #566573; --line: #D5DDE4;
+  --accent: #0B4F8A; --accent-ink: #FFFFFF;
+  --low: #247A5E; --watch: #B98400; --high: #D2600F; --severe: #B3202F;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C141C; --surface: #141F2A; --surface-2: #1A2836; --ink: #E6EDF3; --muted: #93A3B3; --line: #26374A;
+    --accent: #62AEF2; --accent-ink: #0C141C; --low: #3FB58D; --watch: #E3B341; --high: #F08A3C; --severe: #F0566A; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h1 span { color: var(--accent); }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); padding: 16px; margin-bottom: 16px; }
+h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.rainrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.rainval { font: 600 42px/1 var(--mono); }
+.rainval small { font-size: 16px; color: var(--muted); }
+input[type=range] { width: 100%; margin: 14px 0 6px; accent-color: var(--accent); height: 28px; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+button, input[type=number] { font: inherit; color: inherit; }
+.chip { border: 1px solid var(--line); background: var(--surface-2); padding: 6px 12px; cursor: pointer; font: 13px var(--mono); min-height: 36px; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.counts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.counts li { display: flex; align-items: center; gap: 6px; }
+.dot { width: 11px; height: 11px; border-radius: 50%; background: var(--c); }
+.lv-Low { --c: var(--low); } .lv-Watch { --c: var(--watch); } .lv-High { --c: var(--high); } .lv-Severe { --c: var(--severe); }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; color: var(--c); border: 1px solid var(--c); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 8px; border-bottom: 1px solid var(--line); }
+td { padding: 0; border-bottom: 1px solid var(--line); }
+td button { display: block; width: 100%; text-align: left; background: transparent; border: 0; padding: 10px 8px; cursor: pointer; }
+tr:hover td, tr.sel td { background: var(--surface-2); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.score { color: var(--c); font-weight: 600; }
+.bar { height: 8px; background: var(--surface-2); border: 1px solid var(--line); min-width: 80px; }
+.bar i { display: block; height: 100%; background: var(--c); }
+.detail h3 { margin: 0 0 4px; font-size: 22px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 6px 16px; margin: 12px 0; font-size: 14px; }
+.facts div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; font-family: var(--mono); }
+.acts { margin: 6px 0 0; padding-left: 20px; }
+.look { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.look label { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.look input { border: 1px solid var(--line); background: var(--surface-2); padding: 8px; min-height: 38px; width: 150px; }
+.go { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); padding: 8px 14px; cursor: pointer; min-height: 38px; }
+.msg { margin: 8px 0 0; color: var(--muted); font-size: 13px; min-height: 20px; }
+.msg.bad { color: var(--severe); }
+.fine { color: var(--muted); font-size: 12.5px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Urban<span>Shield</span> zone check</h1>
+  <p class="sub">Flood risk for each Bengaluru zone. Move the rain slider to see which zones struggle first.</p>
+
+  <section class="panel">
+    <h2>Rain in the next 2 hours</h2>
+    <div class="rainrow"><div class="rainval"><span id="rainNum">60</span><small> mm</small></div><div id="rainDesc" class="sub" style="margin:0">Very heavy spell</div></div>
+    <input type="range" id="rain" min="0" max="100" step="5" value="60" aria-label="Rain in millimetres over 2 hours">
+    <div class="chips" id="chips" role="group" aria-label="Rain presets"></div>
+    <ul class="counts" id="counts"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>All zones, most urgent first</h2>
+    <p class="fine" style="margin:-4px 0 10px">Urgency is the risk score weighted by the hospitals and schools in the zone, so a high score can rank just below a lower one that has more people exposed.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Zone</th><th>Level</th><th>Score</th><th>Drains at</th><th>Flooded Sept 2022</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="msg" id="loadmsg" role="status"></p>
+  </section>
+
+  <section class="panel detail" id="detail" aria-live="polite"></section>
+
+  <section class="panel">
+    <h2>Check a map point</h2>
+    <form class="look" id="look">
+      <label>Latitude<input id="lat" type="number" step="any" value="12.9257" required></label>
+      <label>Longitude<input id="lon" type="number" step="any" value="77.6762" required></label>
+      <button class="go" type="submit">Find zone</button>
+    </form>
+    <p class="msg" id="lookmsg" role="status"></p>
+  </section>
+
+  <p class="fine" id="note"></p>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var rain = 60, sel = null, data = null, seq = 0;
+  var PRESETS = [20, 40, 60, 90];
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function desc(mm) { return mm === 0 ? "No rain" : mm < 15 ? "Light spell" : mm < 30 ? "Moderate spell" : mm < 50 ? "Heavy spell" : mm < 75 ? "Very heavy spell" : "Cloudburst-level spell"; }
+
+  PRESETS.forEach(function (p) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = p + " mm"; b.setAttribute("data-rain", p);
+    b.addEventListener("click", function () { rain = p; load(); });
+    $("chips").appendChild(b);
+  });
+  $("rain").addEventListener("input", function (e) { rain = +e.target.value; load(); });
+
+  function load() {
+    $("rainNum").textContent = rain; $("rainDesc").textContent = desc(rain); $("rain").value = rain;
+    document.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(+c.getAttribute("data-rain") === rain)); });
+    var my = ++seq;
+    fetch("/zones?rainfall_mm=" + rain).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status); return r.json();
+    }).then(function (j) {
+      if (my !== seq) return;
+      data = j; $("loadmsg").textContent = ""; $("loadmsg").className = "msg"; render();
+    }).catch(function (e) {
+      $("loadmsg").textContent = "Could not load zones (" + e.message + "). Is the backend running on port 8001?"; $("loadmsg").className = "msg bad";
+    });
+  }
+
+  function render() {
+    var zs = data.zones, counts = { Severe: 0, High: 0, Watch: 0, Low: 0 };
+    zs.forEach(function (z) { counts[z.level]++; });
+    $("counts").innerHTML = ["Severe", "High", "Watch", "Low"].map(function (l) {
+      return '<li class="lv-' + l + '"><span class="dot"></span>' + l + ' <b class="num">' + counts[l] + '</b></li>';
+    }).join("");
+    if (!sel || !zs.some(function (z) { return z.id === sel; })) sel = zs[0].id;
+    var tb = $("rows"); tb.innerHTML = "";
+    zs.forEach(function (z) {
+      var tr = document.createElement("tr"); tr.className = "lv-" + z.level + (z.id === sel ? " sel" : "");
+      var load = Math.min(z.drain_load_pct, 300);
+      tr.innerHTML =
+        '<td><button type="button">' + esc(z.name) + '</button></td>' +
+        '<td><button type="button"><span class="pill">' + z.level + '</span></button></td>' +
+        '<td><button type="button"><span class="num score">' + z.score + '</span></button></td>' +
+        '<td><button type="button"><span class="num">' + z.drain_load_pct + '%</span></button></td>' +
+        '<td><button type="button">' + (z.inputs.flooded_sept_2022 ? "Yes" : "") + '</button></td>';
+      tr.querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { sel = z.id; render(); }); });
+      tb.appendChild(tr);
+    });
+    detail(zs.filter(function (z) { return z.id === sel; })[0]);
+    $("note").textContent = data.data_note + " Score = how far the rain overwhelms the drains, scaled by how prone the zone is to holding water. 'Flooded Sept 2022' is shown for comparison and is not used in the score.";
+  }
+
+  function detail(z, extra) {
+    var verdict = z.drain_load_pct > 100
+      ? "Rain reaches the drains at " + z.drain_load_pct + "% of what they can carry. Water will back up onto the road."
+      : z.drain_load_pct > 60 ? "Drains are at " + z.drain_load_pct + "% of capacity. They cope, with little spare."
+      : "Drains are at " + z.drain_load_pct + "% of capacity and cope easily.";
+    var i = z.inputs;
+    $("detail").className = "panel detail lv-" + z.level;
+    $("detail").innerHTML =
+      '<h2>Zone detail</h2><h3>' + esc(z.name) + ' <span class="pill">' + z.level + '</span> <span class="num score">' + z.score + ' / 100</span></h3>' +
+      '<div class="sub" style="margin:0">' + esc(z.note) + (extra ? " " + esc(extra) : "") + '</div>' +
+      '<p><b>' + verdict + '</b></p>' +
+      '<dl class="facts">' +
+        '<div><dt>Rain reaching drains</dt><dd>' + z.rain_reaching_drains_mm + ' mm</dd></div>' +
+        '<div><dt>Drains carry (2 h)</dt><dd>' + z.drain_capacity_mm + ' mm</dd></div>' +
+        '<div><dt>Low-lying</dt><dd>' + Math.round(i.low_lying * 100) + '%</dd></div>' +
+        '<div><dt>Near lake or drain</dt><dd>' + Math.round(i.near_lake_or_drain * 100) + '%</dd></div>' +
+        '<div><dt>Built-up surface</dt><dd>' + Math.round(i.built_up * 100) + '%</dd></div>' +
+        '<div><dt>Drain capacity</dt><dd>' + i.drain_capacity_mm_per_hr + ' mm/h</dd></div>' +
+        '<div><dt>Hospitals / schools</dt><dd>' + i.hospitals + ' / ' + i.schools + '</dd></div>' +
+        '<div><dt>Flooded Sept 2022</dt><dd>' + (i.flooded_sept_2022 ? "Yes" : "No") + '</dd></div>' +
+      '</dl>' +
+      (z.actions.length ? '<b>What the city should do</b><ul class="acts">' + z.actions.map(function (a) { return "<li>" + esc(a) + "</li>"; }).join("") + "</ul>"
+        : '<span class="sub">No action needed at this rain level.</span>');
+  }
+
+  $("look").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var lat = $("lat").value, lon = $("lon").value, m = $("lookmsg");
+    m.className = "msg"; m.textContent = "Looking up...";
+    fetch("/zones/at?lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lon) + "&rainfall_mm=" + rain)
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status)); return j; }); })
+      .then(function (z) {
+        sel = z.id; render();
+        m.textContent = "Nearest zone: " + z.name + ", " + (z.distance_to_zone_centre_m / 1000).toFixed(1) + " km from its centre" + (z.point_inside_zone ? " (inside the zone)." : " (just outside the zone).");
+        $("detail").scrollIntoView({ block: "nearest" });
+      })
+      .catch(function (err) { m.className = "msg bad"; m.textContent = err.message; });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

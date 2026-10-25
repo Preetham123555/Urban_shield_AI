@@ -67,9 +67,10 @@ export default function UrbanMap({ center, riskLevel, onMapClick }: UrbanMapProp
                 const map = LObj.map(mapRef.current!).setView(center, 5);
                 mapInstance.current = map;
 
-                LObj.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-                    attribution: '&copy; CARTO'
-                }).addTo(map);
+              LObj.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+}).addTo(map);
 
                 // Initialize size correctly
                 setTimeout(() => { map.invalidateSize(); }, 200);
